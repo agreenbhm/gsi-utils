@@ -52,12 +52,26 @@ ui_print "     by @KhushrajRathod     "
 ui_print "****************************"
 
 ui_print "Mounting system..."
-mount /system; mount /system_root; mount /system_root/system /system
+mount -o rw /system_root
 
 ui_print "Extracting files..."
-package_extract_dir "system" "/system"
+package_extract_dir "system" "/system_root/system"
 
 ui_print "Setting metadata..."
-set_metadata "/system/bin/phh-su"     "uid" 0 "gid" 2000 "mode" 0755 "selabel" "u:object_r:phhsu_exec:s0"
-set_metadata "/system/etc/init/su.rc" "uid" 0 "gid" 0    "mode" 0644 "selabel" "u:object_r:system_file:s0"
-set_metadata "/system/xbin/su"        "uid" 0 "gid" 0    "mode" 0755 "selabel" "u:object_r:system_file:s0"
+set_metadata "/system_root/system/bin/phh-su"     "uid" 0 "gid" 2000 "mode" 0755 "selabel" "u:object_r:phhsu_exec:s0"
+set_metadata "/system_root/system/etc/init/su.rc" "uid" 0 "gid" 0    "mode" 0644 "selabel" "u:object_r:system_file:s0"
+set_metadata "/system_root/system/xbin/su"        "uid" 0 "gid" 0    "mode" 0755 "selabel" "u:object_r:system_file:s0"
+
+ui_print "****************************"
+ui_print "    SM-T500 Fixes           "
+ui_print "     by @agreenbhm          "
+ui_print "****************************"
+
+ui_print "Mounting vendor..."
+mount -o rw /vendor
+
+ui_print "Patching /vendor/etc/init/hw/init.samsung.bsp.rc"
+sed -i -z 's/\non shutdown/    write \/dev\/watchdog "V"\n    write \/dev\/watchdog0 "V"\n    write \/dev\/watchdog1 "V"\n\non shutdown/g' /vendor/etc/init/hw/init.samsung.bsp.rc
+
+ui_print "Fixing brightness"
+echo 'echo $(cat /sys/devices/platform/soc/5e00000.qcom,mdss_mdp/backlight/panel0-backlight/brightness) > /sys/devices/platform/soc/5e00000.qcom,mdss_mdp/backlight/panel0-backlight/brightness' >> /system_root/system/bin/phh-on-boot.sh
